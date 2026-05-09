@@ -7,6 +7,10 @@ PACKAGE="warpgate-mcp"
 say() { printf '%s\n' "$*"; }
 die() { say "Error: $*" >&2; exit 1; }
 
+need_tty() {
+  ( : < /dev/tty ) 2>/dev/null || die "Interactive install requires a terminal. Set WARPGATE_MCP_ASSUME_YES=1 and environment variables for non-interactive use."
+}
+
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || die "$1 is required"
 }
@@ -41,19 +45,22 @@ prompt() {
     return 0
   fi
   if [ "$secret" = "1" ]; then
+    need_tty
     printf '%s: ' "$label" >&2
-    stty_orig=$(stty -g 2>/dev/null || true)
-    stty -echo 2>/dev/null || true
-    IFS= read -r answer
-    [ -n "$stty_orig" ] && stty "$stty_orig" 2>/dev/null || true
+    stty_orig=$(stty -g < /dev/tty 2>/dev/null || true)
+    stty -echo < /dev/tty 2>/dev/null || true
+    IFS= read -r answer < /dev/tty
+    [ -n "$stty_orig" ] && stty "$stty_orig" < /dev/tty 2>/dev/null || true
     printf '\n' >&2
   elif [ -n "$default_value" ]; then
+    need_tty
     printf '%s [%s]: ' "$label" "$default_value" >&2
-    IFS= read -r answer
+    IFS= read -r answer < /dev/tty
     [ -n "$answer" ] || answer=$default_value
   else
+    need_tty
     printf '%s: ' "$label" >&2
-    IFS= read -r answer
+    IFS= read -r answer < /dev/tty
   fi
   [ -n "$answer" ] || die "$name is required"
   eval "$name=\$answer"
@@ -65,8 +72,9 @@ confirm() {
   if [ "${WARPGATE_MCP_ASSUME_YES:-0}" = "1" ]; then
     return 0
   fi
+  need_tty
   printf '%s [y/N]: ' "$question" >&2
-  IFS= read -r answer
+  IFS= read -r answer < /dev/tty
   case $answer in
     y|Y|yes|YES) return 0 ;;
     *) return 1 ;;
@@ -180,8 +188,9 @@ if [ -z "${WARPGATE_MCP_CLIENT:-}" ]; then
   if [ "${WARPGATE_MCP_ASSUME_YES:-0}" = "1" ]; then
     WARPGATE_MCP_CLIENT=codex
   else
+    need_tty
     printf 'MCP client (codex, claude, cursor, vscode) [codex]: ' >&2
-    IFS= read -r WARPGATE_MCP_CLIENT
+    IFS= read -r WARPGATE_MCP_CLIENT < /dev/tty
     WARPGATE_MCP_CLIENT=${WARPGATE_MCP_CLIENT:-codex}
   fi
 fi
