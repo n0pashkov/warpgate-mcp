@@ -1,6 +1,62 @@
 # Warpgate MCP
 
-AI-friendly, read-only MCP server for discovering Warpgate targets and producing safe connection commands through the Warpgate bastion.
+[![npm version](https://img.shields.io/npm/v/warpgate-mcp.svg)](https://www.npmjs.com/package/warpgate-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/warpgate-mcp.svg)](https://www.npmjs.com/package/warpgate-mcp)
+[![license](https://img.shields.io/npm/l/warpgate-mcp.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20.11-339933?logo=node.js&logoColor=white)](package.json)
+[![Model Context Protocol](https://img.shields.io/badge/MCP-compatible-6f42c1)](https://modelcontextprotocol.io/)
+[![Warpgate](https://img.shields.io/badge/Warpgate-bastion-0f766e)](https://github.com/warp-tech/warpgate)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-3178c6?logo=typescript&logoColor=white)](tsconfig.json)
+
+AI-friendly, read-only MCP server for discovering [Warpgate](https://github.com/warp-tech/warpgate) targets and producing safe connection commands through the bastion.
+
+Ask your agent to “connect to work”, “find the prod database”, or “show SSH targets”, and let Warpgate MCP resolve the right bastion route without exposing upstream credentials.
+
+## Why Warpgate MCP
+
+AI coding agents are good at operating terminals, but they should not guess SSH hosts, database listeners, or private infrastructure routes. Warpgate MCP turns your Warpgate target inventory into a read-only toolset for agents.
+
+- Agents discover target names, protocols, groups, labels, and safe connection hints.
+- Humans still authenticate through Warpgate; upstream credentials stay inside Warpgate.
+- Generated commands use Warpgate syntax such as `admin:target@gateway` and `admin#database-target`.
+- Works with local-first agents and MCP clients over `stdio`; HTTP mode is available for controlled deployments.
+
+## Demo
+
+```text
+User: connect to work
+
+Agent calls: resolve_connection({ "query": "work", "protocol": "ssh" })
+
+Warpgate MCP returns:
+  ssh 'admin:work@10.0.0.5' -p 2222
+
+No upstream private key, password, or internal host credential is exposed.
+```
+
+## Supported Clients
+
+| Client | Install path |
+| --- | --- |
+| Codex | Interactive installer writes `~/.codex/config.toml` |
+| Hermes Agent | Interactive installer writes a local wrapper and runs `hermes mcp add` |
+| Claude Desktop | JSON MCP config snippet |
+| Cursor | JSON MCP config snippet |
+| VS Code | JSON MCP config snippet |
+
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/n0pashkov/warpgate-mcp/master/scripts/install.sh | sh
+```
+
+Or run directly from npm:
+
+```sh
+npx -y warpgate-mcp init
+npx -y warpgate-mcp doctor
+npx -y warpgate-mcp install codex
+```
 
 ## What It Does
 
@@ -40,7 +96,7 @@ warpgate-mcp check   # same as doctor
 warpgate-mcp install codex
 ```
 
-Before the package is published to npm, use the local checkout:
+Local checkout:
 
 ```sh
 cd /home/justnik/warpgate-mcp
