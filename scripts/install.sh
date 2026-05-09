@@ -234,10 +234,12 @@ EOF
   say "Hermes MCP command written: $wrapper_path"
 
   need_cmd hermes
-  if hermes mcp add "$SERVER_NAME" --command "$wrapper_path" && hermes mcp list | grep -Eq "^[[:space:]]*$SERVER_NAME[[:space:]]"; then
+  hermes mcp remove "$SERVER_NAME" >/dev/null 2>&1 || true
+  if printf '\n' | hermes mcp add "$SERVER_NAME" --command "$wrapper_path" && hermes mcp list | grep -Eq "^[[:space:]]*$SERVER_NAME[[:space:]]"; then
     say "Hermes MCP server added: $SERVER_NAME"
   else
-    say "Hermes MCP server was not saved. Re-run the installer and answer yes when Hermes asks whether to enable tools."
+    say "Hermes MCP server was not saved. Try adding it manually:"
+    say "  hermes mcp add $SERVER_NAME --command \"$wrapper_path\""
     say "If '$SERVER_NAME' already exists, run: hermes mcp remove $SERVER_NAME"
     return 1
   fi
