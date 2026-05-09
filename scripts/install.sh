@@ -144,6 +144,60 @@ env = { WARPGATE_BASE_URL = "$base_url", WARPGATE_ADMIN_TOKEN = "$token_value", 
 EOF
 }
 
+write_file_config() {
+  config_path=${WARPGATE_CONFIG_FILE:-"${HOME:-.}/.config/warpgate-mcp/config.json"}
+  config_dir=$(dirname "$config_path")
+  mkdir -p "$config_dir"
+
+  if [ -f "$config_path" ]; then
+    backup_path="$config_path.backup.$(date +%Y%m%d%H%M%S)"
+    cp "$config_path" "$backup_path"
+    say "Backup written: $backup_path"
+  fi
+
+  base_url=$(json_escape "$WARPGATE_BASE_URL")
+  token_value=$(json_escape "$WARPGATE_ADMIN_TOKEN")
+  warpgate_user=$(json_escape "$WARPGATE_USER")
+  tls_verify=$(printf '%s' "$WARPGATE_TLS_VERIFY" | tr '[:upper:]' '[:lower:]')
+  ssh_host=$(json_escape "$WARPGATE_SSH_HOST")
+  ssh_port=$(json_escape "$WARPGATE_SSH_PORT")
+  http_base_url=$(json_escape "$WARPGATE_HTTP_BASE_URL")
+  mysql_host=$(json_escape "$WARPGATE_MYSQL_HOST")
+  mysql_port=$(json_escape "$WARPGATE_MYSQL_PORT")
+
+  case $tls_verify in
+    1|true|yes|on) tls_verify_json=true ;;
+    *) tls_verify_json=false ;;
+  esac
+
+  cat > "$config_path" <<EOF
+{
+  "baseUrl": "$base_url",
+  "adminToken": "$token_value",
+  "warpgateUser": "$warpgate_user",
+  "tlsVerify": $tls_verify_json,
+  "gateway": {
+    "ssh": { "host": "$ssh_host", "port": $ssh_port },
+    "http": { "baseUrl": "$http_base_url" },
+    "mysql": { "host": "$mysql_host", "port": $mysql_port }
+  }
+}
+EOF
+  chmod 600 "$config_path" 2>/dev/null || true
+  say "Warpgate MCP config written: $config_path"
+}
+
+write_hermes_config() {
+  write_file_config
+  need_cmd hermes
+  if hermes mcp add "$SERVER_NAME" --command "npx -y $PACKAGE"; then
+    say "Hermes MCP server added: $SERVER_NAME"
+  else
+    say "Hermes MCP add failed. If '$SERVER_NAME' already exists, run: hermes mcp remove $SERVER_NAME"
+    return 1
+  fi
+}
+
 write_codex_config() {
   config_path=${CODEX_CONFIG_FILE:-"${HOME:-.}/.codex/config.toml"}
   config_dir=$(dirname "$config_path")
@@ -189,14 +243,14 @@ if [ -z "${WARPGATE_MCP_CLIENT:-}" ]; then
     WARPGATE_MCP_CLIENT=codex
   else
     need_tty
-    printf 'MCP client (codex, claude, cursor, vscode) [codex]: ' >&2
+    printf 'MCP client (codex, claude, cursor, vscode, hermes) [codex]: ' >&2
     IFS= read -r WARPGATE_MCP_CLIENT < /dev/tty
     WARPGATE_MCP_CLIENT=${WARPGATE_MCP_CLIENT:-codex}
   fi
 fi
 
 case $WARPGATE_MCP_CLIENT in
-  codex|claude|cursor|vscode) ;;
+  codex|claude|cursor|vscode|hermes) ;;
   *) die "Unsupported MCP client: $WARPGATE_MCP_CLIENT" ;;
 esac
 
@@ -220,6 +274,15 @@ case $WARPGATE_MCP_CLIENT in
     else
       say "No config written. Add this block manually:"
       print_codex_block
+    fi
+    ;;
+  hermes)
+    if confirm "Write MCP server '$SERVER_NAME' to Hermes config now?"; then
+      write_hermes_config
+    else
+      write_file_config
+      say "No Hermes server written. Add it manually:"
+      say "  hermes mcp add $SERVER_NAME --command \"npx -y $PACKAGE\""
     fi
     ;;
   *)
