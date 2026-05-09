@@ -18,24 +18,18 @@ AI-friendly, read-only MCP server for discovering Warpgate targets and producing
 
 ## Quick Start
 
-After the package is published:
-
-```sh
-export WARPGATE_BASE_URL="https://warpgate.example.com"
-export WARPGATE_ADMIN_TOKEN="..."
-npx -y warpgate-mcp
-```
-
-Interactive config:
+Use the published npm package:
 
 ```sh
 npx -y warpgate-mcp init
+npx -y warpgate-mcp doctor
+npx -y warpgate-mcp install codex
 ```
 
-Diagnostics:
+Run the MCP server over stdio after configuration:
 
 ```sh
-npx -y warpgate-mcp doctor
+npx -y warpgate-mcp
 ```
 
 Short aliases are available:
@@ -55,7 +49,30 @@ npm run build
 npm link
 ```
 
-## Ask A Local Agent To Install It
+## Install With One Command
+
+Interactive installer:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/n0pashkov/warpgate-mcp/master/scripts/install.sh | sh
+```
+
+The installer checks Node.js `>=20.11`, checks `npx`, asks for your MCP client, prompts for Warpgate settings, and creates a backup before writing a client config. It does not print the admin token after input.
+
+Supported non-interactive variables:
+
+```sh
+export WARPGATE_BASE_URL="https://warpgate.example.com"
+export WARPGATE_ADMIN_TOKEN="..."
+export WARPGATE_TLS_VERIFY="false"
+export WARPGATE_MCP_CLIENT="codex"
+export WARPGATE_MCP_ASSUME_YES="1"
+curl -fsSL https://raw.githubusercontent.com/n0pashkov/warpgate-mcp/master/scripts/install.sh | sh
+```
+
+For local Warpgate deployments, the installer defaults to SSH port `2222`, HTTP/API from `WARPGATE_BASE_URL`, and MySQL port `33306`.
+
+## Prompt For Local Agents
 
 Paste this prompt into a local coding agent that can edit your config files:
 
@@ -75,7 +92,7 @@ Ask me for these values if they are not already available locally:
 - WARPGATE_SSH_HOST and WARPGATE_SSH_PORT, if different from the base host and 2222
 - WARPGATE_MYSQL_HOST and WARPGATE_MYSQL_PORT, if MySQL targets are used
 
-Do not print or log the admin token. Prefer storing secrets in the MCP client env config or an existing local secret mechanism.
+Do not print or log the admin token. Back up any MCP client config before writing.
 
 After configuration, run `npx -y warpgate-mcp doctor` with the same environment and verify that targets load. Then test the MCP tool `resolve_connection` for one target without connecting directly to the upstream host.
 ```
@@ -106,32 +123,6 @@ Tool responses are structured JSON:
 }
 ```
 
-## Connection Examples
-
-SSH target with a space in the name:
-
-```sh
-ssh 'admin:node 1@gateway.example.com' -p 2222
-```
-
-MySQL:
-
-```sh
-mysql -h gateway.example.com -P 3306 -u 'admin#mysql-target' -p
-```
-
-PostgreSQL uses `%23` for the Warpgate `user#target` separator:
-
-```sh
-psql 'postgresql://admin%23postgres-target@gateway.example.com:5432/postgres'
-```
-
-Kubernetes:
-
-```sh
-kubectl --server='https://gateway.example.com:8443/cluster-target' get namespaces
-```
-
 ## Configuration
 
 Required:
@@ -156,6 +147,69 @@ export WARPGATE_MYSQL_PORT="3306"
 export WARPGATE_POSTGRES_HOST="gateway.example.com"
 export WARPGATE_POSTGRES_PORT="5432"
 export WARPGATE_KUBERNETES_BASE_URL="https://gateway.example.com:8443"
+```
+
+## Add To Clients
+
+Print ready config snippets:
+
+```sh
+npx -y warpgate-mcp install claude
+npx -y warpgate-mcp install cursor
+npx -y warpgate-mcp install codex
+npx -y warpgate-mcp install vscode
+```
+
+Codex example:
+
+```toml
+[mcp_servers.warpgate]
+command = "npx"
+args = ["-y", "warpgate-mcp"]
+env = { WARPGATE_BASE_URL = "https://warpgate.example.com", WARPGATE_ADMIN_TOKEN = "put-token-here" }
+```
+
+Claude Desktop / Cursor / VS Code style:
+
+```json
+{
+  "mcpServers": {
+    "warpgate": {
+      "command": "npx",
+      "args": ["-y", "warpgate-mcp"],
+      "env": {
+        "WARPGATE_BASE_URL": "https://warpgate.example.com",
+        "WARPGATE_ADMIN_TOKEN": "put-token-here"
+      }
+    }
+  }
+}
+```
+
+## Connection Examples
+
+SSH target with a space in the name:
+
+```sh
+ssh 'admin:node 1@gateway.example.com' -p 2222
+```
+
+MySQL:
+
+```sh
+mysql -h gateway.example.com -P 3306 -u 'admin#mysql-target' -p
+```
+
+PostgreSQL uses `%23` for the Warpgate `user#target` separator:
+
+```sh
+psql 'postgresql://admin%23postgres-target@gateway.example.com:5432/postgres'
+```
+
+Kubernetes:
+
+```sh
+kubectl --server='https://gateway.example.com:8443/cluster-target' get namespaces
 ```
 
 ## Exposure Levels
@@ -189,73 +243,22 @@ export MCP_ALLOWED_ORIGINS="https://trusted-client.example.com"
 npx warpgate-mcp
 ```
 
-## Add To Clients
+## Deploy Site On Vercel
 
-Print ready config snippets:
+The landing page lives in `site/` as a standalone Next.js app. In Vercel, set:
+
+- Framework Preset: `Next.js`
+- Root Directory: `site`
+- Build Command: `npm run build`
+- Output Directory: `.next`
+
+Local site development:
 
 ```sh
-npx -y warpgate-mcp install claude
-npx -y warpgate-mcp install cursor
-npx -y warpgate-mcp install codex
-npx -y warpgate-mcp install vscode
+cd site
+npm install
+npm run dev
 ```
-
-Codex example:
-
-```toml
-[mcp_servers.warpgate]
-command = "npx"
-args = ["-y", "warpgate-mcp"]
-env = { WARPGATE_BASE_URL = "https://warpgate.example.com", WARPGATE_ADMIN_TOKEN = "put-token-here" }
-```
-
-For a local `npm link` install, use the shorter config printed by `warpgate-mcp install codex`:
-
-```toml
-[mcp_servers.warpgate]
-command = "warpgate-mcp"
-args = []
-env = { WARPGATE_BASE_URL = "https://warpgate.example.com", WARPGATE_ADMIN_TOKEN = "put-token-here" }
-```
-
-Claude Desktop / Cursor / VS Code style:
-
-```json
-{
-  "mcpServers": {
-    "warpgate": {
-      "command": "npx",
-      "args": ["-y", "warpgate-mcp"],
-      "env": {
-        "WARPGATE_BASE_URL": "https://warpgate.example.com",
-        "WARPGATE_ADMIN_TOKEN": "put-token-here"
-      }
-    }
-  }
-}
-```
-
-## MCP Resources
-
-- `warpgate://targets`
-- `warpgate://targets/{targetName}`
-- `warpgate://targets/{targetName}/connection-guide`
-- `warpgate://help/usage`
-- `warpgate://help/security`
-- `warpgate://help/agent-policy`
-
-## MCP Prompts
-
-- `connect-via-warpgate`
-- `list-my-hosts`
-- `troubleshoot-warpgate-connection`
-
-## Example User Requests
-
-- "Подключись к node1 через Warpgate"
-- "Покажи SSH targets"
-- "Найди postgres target"
-- "Почему не работает команда подключения?"
 
 ## Troubleshooting
 
@@ -278,5 +281,13 @@ The server assumes Warpgate remains the authority for credentials and access con
 ```sh
 npm run typecheck
 npm test
+npm run build
+npm pack --dry-run
+```
+
+Site checks:
+
+```sh
+cd site
 npm run build
 ```
