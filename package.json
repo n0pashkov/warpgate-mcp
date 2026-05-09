@@ -1,0 +1,54 @@
+{
+  "name": "warpgate-mcp",
+  "version": "0.1.0",
+  "description": "Read-only MCP server for discovering Warpgate targets and safe connection guidance.",
+  "license": "MIT",
+  "author": "n0pashkov",
+  "homepage": "https://github.com/n0pashkov/warpgate-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/n0pashkov/warpgate-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/n0pashkov/warpgate-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "warpgate",
+    "bastion",
+    "ssh",
+    "devops",
+    "ai-agents"
+  ],
+  "type": "module",
+  "bin": {
+    "warpgate-mcp": "dist/cli.js",
+    "warpgate-targets-mcp": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}
