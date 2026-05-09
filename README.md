@@ -59,10 +59,10 @@ curl -fsSL https://raw.githubusercontent.com/n0pashkov/warpgate-mcp/master/scrip
 
 The installer checks Node.js `>=20.11`, checks `npx`, asks for your MCP client (`codex`, `claude`, `cursor`, `vscode`, or `hermes`), prompts for Warpgate settings, and creates a backup before writing a client config. It does not print the admin token after input.
 
-For Hermes, the installer writes `~/.config/warpgate-mcp/config.json` with mode `600`, then runs:
+For Hermes, the installer writes `~/.config/warpgate-mcp/config.json` with mode `600`, writes an executable wrapper at `~/.local/bin/warpgate-mcp-hermes`, then runs:
 
 ```sh
-hermes mcp add warpgate --command "npx -y warpgate-mcp"
+hermes mcp add warpgate --command "$HOME/.local/bin/warpgate-mcp-hermes"
 ```
 
 Supported non-interactive variables:

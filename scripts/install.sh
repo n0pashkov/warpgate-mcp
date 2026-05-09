@@ -125,6 +125,12 @@ toml_escape() {
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
+shell_escape() {
+  printf "'"
+  printf '%s' "$1" | sed "s/'/'\\\\''/g"
+  printf "'"
+}
+
 print_codex_block() {
   token_value=${1:-"<redacted>"}
   base_url=$(toml_escape "$WARPGATE_BASE_URL")
@@ -189,8 +195,46 @@ EOF
 
 write_hermes_config() {
   write_file_config
+  wrapper_path=${WARPGATE_HERMES_COMMAND:-"${HOME:-.}/.local/bin/warpgate-mcp-hermes"}
+  wrapper_dir=$(dirname "$wrapper_path")
+  mkdir -p "$wrapper_dir"
+
+  base_url=$(shell_escape "$WARPGATE_BASE_URL")
+  token_value=$(shell_escape "$WARPGATE_ADMIN_TOKEN")
+  warpgate_user=$(shell_escape "$WARPGATE_USER")
+  tls_verify=$(shell_escape "$WARPGATE_TLS_VERIFY")
+  ssh_host=$(shell_escape "$WARPGATE_SSH_HOST")
+  ssh_port=$(shell_escape "$WARPGATE_SSH_PORT")
+  http_base_url=$(shell_escape "$WARPGATE_HTTP_BASE_URL")
+  mysql_host=$(shell_escape "$WARPGATE_MYSQL_HOST")
+  mysql_port=$(shell_escape "$WARPGATE_MYSQL_PORT")
+  config_path=$(shell_escape "${WARPGATE_CONFIG_FILE:-"${HOME:-.}/.config/warpgate-mcp/config.json"}")
+
+  if [ -f "$wrapper_path" ]; then
+    backup_path="$wrapper_path.backup.$(date +%Y%m%d%H%M%S)"
+    cp "$wrapper_path" "$backup_path"
+    say "Backup written: $backup_path"
+  fi
+
+  cat > "$wrapper_path" <<EOF
+#!/bin/sh
+export WARPGATE_CONFIG_FILE=$config_path
+export WARPGATE_BASE_URL=$base_url
+export WARPGATE_ADMIN_TOKEN=$token_value
+export WARPGATE_USER=$warpgate_user
+export WARPGATE_TLS_VERIFY=$tls_verify
+export WARPGATE_SSH_HOST=$ssh_host
+export WARPGATE_SSH_PORT=$ssh_port
+export WARPGATE_HTTP_BASE_URL=$http_base_url
+export WARPGATE_MYSQL_HOST=$mysql_host
+export WARPGATE_MYSQL_PORT=$mysql_port
+exec npx -y $PACKAGE "\$@"
+EOF
+  chmod 700 "$wrapper_path" 2>/dev/null || true
+  say "Hermes MCP command written: $wrapper_path"
+
   need_cmd hermes
-  if hermes mcp add "$SERVER_NAME" --command "npx -y $PACKAGE"; then
+  if hermes mcp add "$SERVER_NAME" --command "$wrapper_path"; then
     say "Hermes MCP server added: $SERVER_NAME"
   else
     say "Hermes MCP add failed. If '$SERVER_NAME' already exists, run: hermes mcp remove $SERVER_NAME"
@@ -282,7 +326,7 @@ case $WARPGATE_MCP_CLIENT in
     else
       write_file_config
       say "No Hermes server written. Add it manually:"
-      say "  hermes mcp add $SERVER_NAME --command \"npx -y $PACKAGE\""
+      say "  hermes mcp add $SERVER_NAME --command \"${WARPGATE_HERMES_COMMAND:-"${HOME:-.}/.local/bin/warpgate-mcp-hermes"}\""
     fi
     ;;
   *)
@@ -293,4 +337,8 @@ esac
 
 say ""
 say "Next check:"
-say "  npx -y warpgate-mcp doctor"
+if [ "$WARPGATE_MCP_CLIENT" = "hermes" ]; then
+  say "  ${WARPGATE_HERMES_COMMAND:-"${HOME:-.}/.local/bin/warpgate-mcp-hermes"} doctor"
+else
+  say "  npx -y warpgate-mcp doctor"
+fi
