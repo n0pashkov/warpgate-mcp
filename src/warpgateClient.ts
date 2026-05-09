@@ -2,7 +2,7 @@ import type { GatewayEndpoints, ServerConfig, WarpgateTarget } from './types.js'
 import { normalizeTarget } from './normalize.js';
 
 export class WarpgateClient {
-  constructor(private readonly config: Pick<ServerConfig, 'baseUrl' | 'adminToken' | 'tlsVerify'> & { gateway: GatewayEndpoints }) {}
+  constructor(private readonly config: Pick<ServerConfig, 'baseUrl' | 'adminToken' | 'warpgateUser' | 'tlsVerify'> & { gateway: GatewayEndpoints }) {}
 
   targetsUrl(): string {
     return `${this.config.baseUrl}/@warpgate/admin/api/targets`;
@@ -31,7 +31,7 @@ export class WarpgateClient {
 
     const payload = (await response.json()) as unknown;
     const rows = Array.isArray(payload) ? payload : Array.isArray((payload as { targets?: unknown[] }).targets) ? (payload as { targets: unknown[] }).targets : [];
-    return rows.map((target) => normalizeTarget(target, this.config.gateway));
+    return rows.map((target) => normalizeTarget(target, this.config.gateway, this.config.warpgateUser));
   }
 
   async getTarget(name: string): Promise<WarpgateTarget | undefined> {

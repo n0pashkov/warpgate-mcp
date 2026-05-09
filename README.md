@@ -64,6 +64,7 @@ Supported non-interactive variables:
 ```sh
 export WARPGATE_BASE_URL="https://warpgate.example.com"
 export WARPGATE_ADMIN_TOKEN="..."
+export WARPGATE_USER="admin"
 export WARPGATE_TLS_VERIFY="false"
 export WARPGATE_MCP_CLIENT="codex"
 export WARPGATE_MCP_ASSUME_YES="1"
@@ -88,6 +89,7 @@ args: ["-y", "warpgate-mcp"]
 Ask me for these values if they are not already available locally:
 - WARPGATE_BASE_URL, for example https://10.0.0.5:8888
 - WARPGATE_ADMIN_TOKEN
+- WARPGATE_USER, your Warpgate login used in generated commands, for example admin
 - WARPGATE_TLS_VERIFY, usually false for a self-signed local Warpgate
 - WARPGATE_SSH_HOST and WARPGATE_SSH_PORT, if different from the base host and 2222
 - WARPGATE_MYSQL_HOST and WARPGATE_MYSQL_PORT, if MySQL targets are used
@@ -130,6 +132,7 @@ Required:
 ```sh
 export WARPGATE_BASE_URL="https://warpgate.example.com"
 export WARPGATE_ADMIN_TOKEN="..."
+export WARPGATE_USER="admin"
 ```
 
 Optional:
@@ -166,7 +169,7 @@ Codex example:
 [mcp_servers.warpgate]
 command = "npx"
 args = ["-y", "warpgate-mcp"]
-env = { WARPGATE_BASE_URL = "https://warpgate.example.com", WARPGATE_ADMIN_TOKEN = "put-token-here" }
+env = { WARPGATE_BASE_URL = "https://warpgate.example.com", WARPGATE_ADMIN_TOKEN = "put-token-here", WARPGATE_USER = "admin" }
 ```
 
 Claude Desktop / Cursor / VS Code style:
@@ -179,7 +182,8 @@ Claude Desktop / Cursor / VS Code style:
       "args": ["-y", "warpgate-mcp"],
       "env": {
         "WARPGATE_BASE_URL": "https://warpgate.example.com",
-        "WARPGATE_ADMIN_TOKEN": "put-token-here"
+        "WARPGATE_ADMIN_TOKEN": "put-token-here",
+        "WARPGATE_USER": "admin"
       }
     }
   }
@@ -187,6 +191,8 @@ Claude Desktop / Cursor / VS Code style:
 ```
 
 ## Connection Examples
+
+Set `WARPGATE_USER` to make generated commands include the Warpgate login explicitly. For SSH, Warpgate expects `user:target@gateway`, for example `admin:node1@gateway.example.com`; database listeners use `user#target`.
 
 SSH target with a space in the name:
 

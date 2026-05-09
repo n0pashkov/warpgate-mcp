@@ -17,6 +17,7 @@ export interface GatewayEndpoints {
 export interface ServerConfig {
   baseUrl: string;
   adminToken: string;
+  warpgateUser?: string;
   tlsVerify: boolean;
   exposureLevel: ExposureLevel;
   gateway: GatewayEndpoints;

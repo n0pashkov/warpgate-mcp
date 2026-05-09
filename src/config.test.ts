@@ -17,6 +17,7 @@ describe('loadConfig', () => {
       MCP_AUTH_TOKEN: 'mcp-token',
       MCP_ALLOWED_ORIGINS: 'https://client.example.test, https://agent.example.test',
       WARPGATE_EXPOSURE_LEVEL: 'minimal',
+      WARPGATE_USER: 'admin',
     });
 
     expect(config.httpHost).toBe('0.0.0.0');
@@ -24,5 +25,6 @@ describe('loadConfig', () => {
     expect(config.authToken).toBe('mcp-token');
     expect(config.allowedOrigins).toEqual(['https://client.example.test', 'https://agent.example.test']);
     expect(config.exposureLevel).toBe('minimal');
+    expect(config.warpgateUser).toBe('admin');
   });
 });

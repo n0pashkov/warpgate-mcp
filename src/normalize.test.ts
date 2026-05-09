@@ -40,6 +40,13 @@ describe('normalizeTarget', () => {
     });
   });
 
+  it('uses the configured Warpgate user in default connection guidance', () => {
+    const target = normalizeTarget({ name: 'shell', protocol: 'ssh' }, gateway, 'admin');
+
+    expect(target.connection.examples).toContain("ssh 'admin:shell@gw.example.test' -p 2222");
+    expect(target.connection.notes).toContain('Use your Warpgate username before the colon. Target upstream credentials remain managed by Warpgate.');
+  });
+
   it('searches across protocol, groups, host hints, names, and labels', () => {
     const targets = [
       normalizeTarget({ name: 'prod-shell', protocol: 'ssh', groups: ['prod'], host: '10.0.0.5', labels: { owner: 'ops' } }, gateway),

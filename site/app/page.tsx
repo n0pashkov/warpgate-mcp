@@ -8,12 +8,14 @@ const codexConfig = [
   'args = ["-y", "warpgate-mcp"]',
   'env = {',
   '  WARPGATE_BASE_URL = "https://warpgate.example.com",',
+  '  WARPGATE_USER = "admin",',
   '  WARPGATE_TLS_VERIFY = "true"',
   '}',
 ].join('\n');
 const doctorCommand = [
   'WARPGATE_BASE_URL=https://warpgate.example.com \\',
   'WARPGATE_ADMIN_TOKEN=... \\',
+  'WARPGATE_USER=admin \\',
   'npx -y warpgate-mcp doctor',
 ].join('\n');
 

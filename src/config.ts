@@ -5,6 +5,7 @@ import type { ExposureLevel, GatewayEndpoints, ServerConfig } from './types.js';
 interface FileConfig {
   baseUrl?: string;
   adminToken?: string;
+  warpgateUser?: string;
   tlsVerify?: boolean;
   exposureLevel?: ExposureLevel;
   httpPort?: number;
@@ -53,6 +54,11 @@ function listFromEnv(value: string | undefined, fallback: string[]): string[] {
     .filter(Boolean);
 }
 
+function optionalString(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   const file = readConfigFile(env.WARPGATE_CONFIG_FILE);
   const baseUrl = normalizeBaseUrl(env.WARPGATE_BASE_URL ?? file.baseUrl ?? 'https://localhost');
@@ -90,6 +96,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   return {
     baseUrl,
     adminToken,
+    warpgateUser: optionalString(env.WARPGATE_USER ?? file.warpgateUser),
     tlsVerify: boolFromEnv(env.WARPGATE_TLS_VERIFY, file.tlsVerify ?? true),
     exposureLevel: exposureFromEnv(env.WARPGATE_EXPOSURE_LEVEL, file.exposureLevel ?? 'normal'),
     gateway,

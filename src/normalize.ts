@@ -87,7 +87,7 @@ function labels(raw: Record<string, unknown>): Record<string, string> {
   );
 }
 
-export function normalizeTarget(input: unknown, gateway: GatewayEndpoints): WarpgateTarget {
+export function normalizeTarget(input: unknown, gateway: GatewayEndpoints, warpgateUser?: string): WarpgateTarget {
   const raw = obj(input);
   const redacted = redactSecretsWithMetadata(raw);
   const name = readString(raw.name ?? raw.id ?? raw.username ?? raw.slug) ?? 'unnamed-target';
@@ -106,7 +106,7 @@ export function normalizeTarget(input: unknown, gateway: GatewayEndpoints): Warp
     ...summary,
     raw: redacted.value,
     redaction: redacted.metadata,
-    connection: connectionGuide(protocol, name, gateway),
+    connection: connectionGuide(protocol, name, gateway, warpgateUser),
   };
 }
 

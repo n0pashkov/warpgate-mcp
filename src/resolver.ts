@@ -10,6 +10,7 @@ export interface ResolveTargetInput {
 
 export interface ResolveConnectionInput extends ResolveTargetInput {
   warpgateUser?: string;
+  defaultWarpgateUser?: string;
   client?: string;
   exposureLevel: ExposureLevel;
   gateway: GatewayEndpoints;
@@ -115,7 +116,7 @@ export function resolveConnection(targets: WarpgateTarget[], input: ResolveConne
   }
 
   const protocol = input.protocol && input.protocol !== 'unknown' ? input.protocol : target.protocol;
-  const guide = connectionGuide(protocol, target.name, input.gateway, input.warpgateUser);
+  const guide = connectionGuide(protocol, target.name, input.gateway, input.warpgateUser ?? input.defaultWarpgateUser);
   const command = guide.commands.find((item) => item.shell === 'bash/zsh')?.command ?? guide.examples[0];
 
   return envelope({

@@ -83,6 +83,7 @@ json_escape() {
 
 print_json_block() {
   base_url=$(json_escape "$WARPGATE_BASE_URL")
+  warpgate_user=$(json_escape "$WARPGATE_USER")
   tls_verify=$(json_escape "$WARPGATE_TLS_VERIFY")
   ssh_host=$(json_escape "$WARPGATE_SSH_HOST")
   ssh_port=$(json_escape "$WARPGATE_SSH_PORT")
@@ -98,6 +99,7 @@ print_json_block() {
       "env": {
         "WARPGATE_BASE_URL": "$base_url",
         "WARPGATE_ADMIN_TOKEN": "<redacted>",
+        "WARPGATE_USER": "$warpgate_user",
         "WARPGATE_TLS_VERIFY": "$tls_verify",
         "WARPGATE_SSH_HOST": "$ssh_host",
         "WARPGATE_SSH_PORT": "$ssh_port",
@@ -119,6 +121,7 @@ print_codex_block() {
   token_value=${1:-"<redacted>"}
   base_url=$(toml_escape "$WARPGATE_BASE_URL")
   token_value=$(toml_escape "$token_value")
+  warpgate_user=$(toml_escape "$WARPGATE_USER")
   tls_verify=$(toml_escape "$WARPGATE_TLS_VERIFY")
   ssh_host=$(toml_escape "$WARPGATE_SSH_HOST")
   ssh_port=$(toml_escape "$WARPGATE_SSH_PORT")
@@ -129,7 +132,7 @@ print_codex_block() {
 [mcp_servers.$SERVER_NAME]
 command = "npx"
 args = ["-y", "$PACKAGE"]
-env = { WARPGATE_BASE_URL = "$base_url", WARPGATE_ADMIN_TOKEN = "$token_value", WARPGATE_TLS_VERIFY = "$tls_verify", WARPGATE_SSH_HOST = "$ssh_host", WARPGATE_SSH_PORT = "$ssh_port", WARPGATE_HTTP_BASE_URL = "$http_base_url", WARPGATE_MYSQL_HOST = "$mysql_host", WARPGATE_MYSQL_PORT = "$mysql_port" }
+env = { WARPGATE_BASE_URL = "$base_url", WARPGATE_ADMIN_TOKEN = "$token_value", WARPGATE_USER = "$warpgate_user", WARPGATE_TLS_VERIFY = "$tls_verify", WARPGATE_SSH_HOST = "$ssh_host", WARPGATE_SSH_PORT = "$ssh_port", WARPGATE_HTTP_BASE_URL = "$http_base_url", WARPGATE_MYSQL_HOST = "$mysql_host", WARPGATE_MYSQL_PORT = "$mysql_port" }
 EOF
 }
 
@@ -190,6 +193,7 @@ esac
 
 prompt WARPGATE_BASE_URL "Warpgate HTTP/API base URL" "${WARPGATE_BASE_URL:-https://localhost:8888}" 0
 prompt WARPGATE_ADMIN_TOKEN "Warpgate admin token" "" 1
+prompt WARPGATE_USER "Warpgate username for connection examples" "${WARPGATE_USER:-admin}" 0
 prompt WARPGATE_TLS_VERIFY "Verify TLS certificates" "${WARPGATE_TLS_VERIFY:-false}" 0
 
 default_host=$(host_from_url "$WARPGATE_BASE_URL")

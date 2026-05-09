@@ -1,6 +1,6 @@
 {
   "name": "warpgate-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Read-only MCP server for discovering Warpgate targets and safe connection guidance.",
   "license": "MIT",
   "author": "n0pashkov",

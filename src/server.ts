@@ -19,7 +19,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
     { name: 'warpgate', version: '0.1.0' },
     {
       instructions:
-        'Use this read-only server to discover Warpgate targets and generate bastion-safe connection guidance. Never expect target secrets in results.',
+        'Use this read-only server to discover Warpgate targets and generate bastion-safe connection guidance. Never expect target secrets in results. SSH logins use the Warpgate format user:target@gateway; pass warpgateUser only when overriding the configured default user.',
     },
   );
 
@@ -115,6 +115,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
             '3. Use resolve_connection before list_targets when the user wants to connect to something.',
             '4. If the result is ambiguous, show the candidate list to the user.',
             '5. Use returned commands exactly; do not invent target names.',
+            '6. Use Warpgate user-target syntax such as admin:host for SSH and user#target for database listeners. If a default WARPGATE_USER is configured, do not ask the user which Warpgate username to use.',
           ].join('\n'),
         },
       ],
@@ -209,7 +210,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
       inputSchema: {
         name: z.string().min(1),
         protocol: protocolSchema.optional().describe('Optional override when the target protocol is unknown or ambiguous.'),
-        warpgateUser: z.string().optional().describe('Optional Warpgate username for copy-paste command examples.'),
+        warpgateUser: z.string().optional().describe('Optional Warpgate username override. If omitted, the configured WARPGATE_USER is used when available.'),
       },
     },
     async ({ name, protocol, warpgateUser }) => {
@@ -225,7 +226,8 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
           humanSummary: `Target ${name} was not found.`,
         });
       }
-      const guide = protocol && protocol !== target.protocol ? connectionGuide(protocol, name, config.gateway, warpgateUser) : connectionGuide(target.protocol, name, config.gateway, warpgateUser);
+      const user = warpgateUser ?? config.warpgateUser;
+      const guide = protocol && protocol !== target.protocol ? connectionGuide(protocol, name, config.gateway, user) : connectionGuide(target.protocol, name, config.gateway, user);
       return toolText({
         status: 'ok',
         data: { guide },
@@ -260,7 +262,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
       inputSchema: {
         query: z.string().min(1),
         protocol: protocolSchema.optional(),
-        warpgateUser: z.string().optional(),
+        warpgateUser: z.string().optional().describe('Optional Warpgate username override. If omitted, the configured WARPGATE_USER is used when available.'),
         client: z.string().optional(),
       },
     },
@@ -270,6 +272,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
           ...input,
           exposureLevel: config.exposureLevel,
           gateway: config.gateway,
+          defaultWarpgateUser: config.warpgateUser,
         }),
       ),
   );
@@ -287,7 +290,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
           role: 'user',
           content: {
             type: 'text',
-            text: `Find the Warpgate target${query ? ` for "${query}"` : ''} with resolve_connection. If ambiguous, show candidates. Never ask for upstream credentials.`,
+            text: `Find the Warpgate target${query ? ` for "${query}"` : ''} with resolve_connection. If ambiguous, show candidates. Never ask for upstream credentials or guess direct host credentials; use the returned Warpgate user:target command.`,
           },
         },
       ],

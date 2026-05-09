@@ -99,12 +99,13 @@ function configure(client: string): void {
   const env = {
     WARPGATE_BASE_URL: process.env.WARPGATE_BASE_URL ?? 'https://warpgate.example.com',
     WARPGATE_ADMIN_TOKEN: process.env.WARPGATE_ADMIN_TOKEN ?? 'put-token-here',
+    WARPGATE_USER: process.env.WARPGATE_USER ?? 'admin',
   };
   const command = 'warpgate-mcp';
   const args: string[] = [];
 
   if (client === 'codex') {
-    console.log(`[mcp_servers.warpgate]\ncommand = "${command}"\nargs = []\nenv = { WARPGATE_BASE_URL = "${env.WARPGATE_BASE_URL}", WARPGATE_ADMIN_TOKEN = "${env.WARPGATE_ADMIN_TOKEN}" }`);
+    console.log(`[mcp_servers.warpgate]\ncommand = "${command}"\nargs = []\nenv = { WARPGATE_BASE_URL = "${env.WARPGATE_BASE_URL}", WARPGATE_ADMIN_TOKEN = "${env.WARPGATE_ADMIN_TOKEN}", WARPGATE_USER = "${env.WARPGATE_USER}" }`);
     return;
   }
 
@@ -126,6 +127,7 @@ async function initConfig(): Promise<void> {
   const path = process.env.WARPGATE_CONFIG_FILE ?? defaultConfigPath();
   const baseUrl = await rl.question('Warpgate URL: ');
   const adminToken = await rl.question('Admin token: ');
+  const warpgateUser = await rl.question('Warpgate username for connection examples [admin]: ');
   const tlsVerify = (await rl.question('TLS verify? yes/no [yes]: ')).trim().toLowerCase() !== 'no';
   const sshHost = await rl.question('Default SSH listener host: ');
   const sshPort = await rl.question('Default SSH listener port [2222]: ');
@@ -140,6 +142,7 @@ async function initConfig(): Promise<void> {
   const config = {
     baseUrl,
     adminToken,
+    warpgateUser: warpgateUser || 'admin',
     tlsVerify,
     gateway: {
       ssh: { host: sshHost, port: Number.parseInt(sshPort || '2222', 10) },

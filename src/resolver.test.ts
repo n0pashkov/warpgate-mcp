@@ -45,6 +45,19 @@ describe('resolver', () => {
     expect(result.data?.command).toBe("ssh 'admin:node 1@gw.example.test' -p 2222");
   });
 
+  it('uses the configured default Warpgate user when the tool input omits one', () => {
+    const result = resolveConnection(targets, {
+      query: 'node 1',
+      protocol: 'ssh',
+      defaultWarpgateUser: 'admin',
+      exposureLevel: 'normal',
+      gateway,
+    });
+
+    expect(result.status).toBe('resolved');
+    expect(result.data?.command).toBe("ssh 'admin:node 1@gw.example.test' -p 2222");
+  });
+
   it('uses %23 in postgres URLs for the Warpgate user target separator', () => {
     const result = resolveConnection(targets, {
       query: 'main pg',
