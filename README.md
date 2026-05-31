@@ -256,6 +256,8 @@ Claude Desktop / Cursor / VS Code style:
 
 Set `WARPGATE_USER` to make generated commands include the Warpgate login explicitly. For SSH, Warpgate expects `user:target@gateway`, for example `admin:node1@gateway.example.com`; database listeners use `user#target`.
 
+The SSH colon is not a username/password separator. In `admin:truenas@10.0.0.5`, the SSH username is the entire `admin:truenas` value, the gateway host is `10.0.0.5`, and no password is embedded in the command. Agents should use the returned command exactly instead of rewriting it into a direct SSH login.
+
 SSH target with a space in the name:
 
 ```sh
@@ -339,6 +341,19 @@ npx -y warpgate-mcp doctor
 It checks Node.js version, config loading, Warpgate API reachability, token validity, target loading, redaction, and listener configuration.
 
 For MCP Inspector, run the server over stdio with the required environment variables, or use HTTP mode and point the inspector to `http://127.0.0.1:3000/mcp`.
+
+After adding or changing the MCP client config, restart or reload the client so the current agent session discovers the server. Before asking an agent to connect, verify that the `warpgate` MCP server and its `resolve_connection` tool are available. If the tool is missing, restore the MCP integration instead of bypassing Warpgate or guessing direct target credentials.
+
+Recommended agent policy:
+
+```text
+Use the Warpgate MCP resolve_connection tool before connecting to infrastructure.
+Use returned commands exactly. For SSH, user:target@gateway is one Warpgate route:
+the colon separates the Warpgate username from the target name, never a username
+from a password. If Warpgate MCP tools are unavailable in the current session,
+report that the MCP integration is not loaded and restore it before connecting.
+Do not bypass Warpgate or guess direct target credentials.
+```
 
 ## Security Model
 

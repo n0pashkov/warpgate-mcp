@@ -16,6 +16,9 @@ function user(value?: string): string {
   return value && value.trim() ? value : '<warpgate-user>';
 }
 
+export const SSH_COLON_NOTE =
+  'Important: the colon separates the Warpgate username from the Warpgate target name. It is not a username/password separator. The entire value before @ is the SSH username; no password is embedded in the command.';
+
 export function connectionGuide(protocol: Protocol, target: string, gateway: GatewayEndpoints, warpgateUser?: string): ConnectionGuidance {
   const wgUser = user(warpgateUser);
   switch (protocol) {
@@ -32,7 +35,13 @@ export function connectionGuide(protocol: Protocol, target: string, gateway: Gat
           { shell: 'powershell', command: `ssh ${psQuote(login)} -p ${gateway.ssh.port ?? 22}`, copyPasteSafe: true },
           { shell: 'plain', command: `ssh ${wgUser}:${target}@${gateway.ssh.host} -p ${gateway.ssh.port ?? 22}`, copyPasteSafe: !/\s/.test(target) },
         ],
-        notes: ['Use your Warpgate username before the colon. Target upstream credentials remain managed by Warpgate.'],
+        notes: [SSH_COLON_NOTE, 'Target upstream credentials remain managed by Warpgate.'],
+        loginSemantics: {
+          sshUsername: `${wgUser}:${target}`,
+          format: 'warpgate-user:target@gateway',
+          colonMeaning: 'Separates the Warpgate username from the target name; it never separates a username from a password.',
+          passwordEmbedded: false,
+        },
       };
     }
     case 'mysql': {

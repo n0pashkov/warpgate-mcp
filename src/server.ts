@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { connectionGuide } from './guidance.js';
@@ -8,6 +9,10 @@ import type { ServerConfig, WarpgateTarget } from './types.js';
 import { WarpgateClient } from './warpgateClient.js';
 
 const protocolSchema = z.enum(['ssh', 'http', 'mysql', 'postgres', 'kubernetes', 'unknown']);
+const packageJson = createRequire(import.meta.url)('../package.json') as { version: string };
+
+const sshSyntaxRule =
+  'For SSH, user:target@gateway is one SSH login route: the colon separates the Warpgate username from the target name, never a username from a password. For example, in admin:truenas@10.0.0.5 the SSH username is admin:truenas, the gateway host is 10.0.0.5, and no password is embedded.';
 
 function jsonText(value: unknown): string {
   return JSON.stringify(value, null, 2);
@@ -16,10 +21,10 @@ function jsonText(value: unknown): string {
 export function createWarpgateMcpServer(config: ServerConfig): McpServer {
   const client = new WarpgateClient(config);
   const server = new McpServer(
-    { name: 'warpgate', version: '0.1.0' },
+    { name: 'warpgate', version: packageJson.version },
     {
       instructions:
-        'Use this read-only server to discover Warpgate targets and generate bastion-safe connection guidance. Never expect target secrets in results. SSH logins use the Warpgate format user:target@gateway; pass warpgateUser only when overriding the configured default user.',
+        `Use this read-only server to discover Warpgate targets and generate bastion-safe connection guidance. Never expect target secrets in results. ${sshSyntaxRule} Pass warpgateUser only when overriding the configured default user. If these tools are unavailable in a client session, report that the Warpgate MCP integration is not loaded in that session; do not guess direct target credentials or reinterpret a previously returned Warpgate route.`,
     },
   );
 
@@ -115,7 +120,9 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
             '3. Use resolve_connection before list_targets when the user wants to connect to something.',
             '4. If the result is ambiguous, show the candidate list to the user.',
             '5. Use returned commands exactly; do not invent target names.',
-            '6. Use Warpgate user-target syntax such as admin:host for SSH and user#target for database listeners. If a default WARPGATE_USER is configured, do not ask the user which Warpgate username to use.',
+            `6. ${sshSyntaxRule}`,
+            '7. Use user#target for database listeners. If a default WARPGATE_USER is configured, do not ask the user which Warpgate username to use.',
+            '8. If Warpgate MCP tools are unavailable in the current client session, say that the MCP integration is not loaded and ask to restore it. Do not bypass Warpgate, guess direct credentials, or reinterpret a previously returned route.',
           ].join('\n'),
         },
       ],
@@ -258,7 +265,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
     {
       title: 'Resolve Warpgate Connection',
       description:
-        'Resolve a user request like "connect to node1" into a safe Warpgate connection command. Prefer this tool before list_targets when the user wants to connect to something. Returns either one resolved command or an ambiguous candidate list.',
+        `Resolve a user request like "connect to node1" into a safe Warpgate connection command. Prefer this tool before list_targets when the user wants to connect to something. Returns either one resolved command or an ambiguous candidate list. ${sshSyntaxRule}`,
       inputSchema: {
         query: z.string().min(1),
         protocol: protocolSchema.optional(),
@@ -290,7 +297,7 @@ export function createWarpgateMcpServer(config: ServerConfig): McpServer {
           role: 'user',
           content: {
             type: 'text',
-            text: `Find the Warpgate target${query ? ` for "${query}"` : ''} with resolve_connection. If ambiguous, show candidates. Never ask for upstream credentials or guess direct host credentials; use the returned Warpgate user:target command.`,
+            text: `Find the Warpgate target${query ? ` for "${query}"` : ''} with resolve_connection. If ambiguous, show candidates. Never ask for upstream credentials or guess direct host credentials; use the returned Warpgate user:target command exactly. ${sshSyntaxRule}`,
           },
         },
       ],

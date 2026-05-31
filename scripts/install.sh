@@ -345,3 +345,6 @@ if [ "$WARPGATE_MCP_CLIENT" = "hermes" ]; then
 else
   say "  npx -y warpgate-mcp doctor"
 fi
+say ""
+say "Restart or reload $WARPGATE_MCP_CLIENT so the current agent session discovers the new MCP server."
+say "Then verify that the warpgate resolve_connection tool is available before asking the agent to connect."

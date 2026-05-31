@@ -44,7 +44,15 @@ describe('normalizeTarget', () => {
     const target = normalizeTarget({ name: 'shell', protocol: 'ssh' }, gateway, 'admin');
 
     expect(target.connection.examples).toContain("ssh 'admin:shell@gw.example.test' -p 2222");
-    expect(target.connection.notes).toContain('Use your Warpgate username before the colon. Target upstream credentials remain managed by Warpgate.');
+    expect(target.connection.notes).toContain(
+      'Important: the colon separates the Warpgate username from the Warpgate target name. It is not a username/password separator. The entire value before @ is the SSH username; no password is embedded in the command.',
+    );
+    expect(target.connection.loginSemantics).toEqual({
+      sshUsername: 'admin:shell',
+      format: 'warpgate-user:target@gateway',
+      colonMeaning: 'Separates the Warpgate username from the target name; it never separates a username from a password.',
+      passwordEmbedded: false,
+    });
   });
 
   it('searches across protocol, groups, host hints, names, and labels', () => {

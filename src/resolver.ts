@@ -1,4 +1,4 @@
-import { connectionGuide } from './guidance.js';
+import { connectionGuide, SSH_COLON_NOTE } from './guidance.js';
 import { exposeTarget, searchTargets, summarizeTarget } from './normalize.js';
 import { envelope, mergeRedactions } from './response.js';
 import type { ExposureLevel, GatewayEndpoints, Protocol, ToolEnvelope, WarpgateTarget } from './types.js';
@@ -132,6 +132,7 @@ export function resolveConnection(targets: WarpgateTarget[], input: ResolveConne
       notes: guide.notes,
       client: input.client,
     },
+    warnings: protocol === 'ssh' ? [SSH_COLON_NOTE] : [],
     redaction: target.redaction,
     humanSummary: `Use the returned ${protocol} command to connect to ${target.name} through Warpgate.`,
   });

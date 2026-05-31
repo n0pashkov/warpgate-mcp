@@ -50,6 +50,14 @@ export interface ConnectionGuidance {
   examples: string[];
   commands: ConnectionCommand[];
   notes: string[];
+  loginSemantics?: LoginSemantics;
+}
+
+export interface LoginSemantics {
+  sshUsername: string;
+  format: 'warpgate-user:target@gateway';
+  colonMeaning: string;
+  passwordEmbedded: false;
 }
 
 export interface ConnectionCommand {

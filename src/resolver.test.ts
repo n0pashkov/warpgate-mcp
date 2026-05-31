@@ -43,6 +43,9 @@ describe('resolver', () => {
 
     expect(result.status).toBe('resolved');
     expect(result.data?.command).toBe("ssh 'admin:node 1@gw.example.test' -p 2222");
+    expect(result.warnings).toContain(
+      'Important: the colon separates the Warpgate username from the Warpgate target name. It is not a username/password separator. The entire value before @ is the SSH username; no password is embedded in the command.',
+    );
   });
 
   it('uses the configured default Warpgate user when the tool input omits one', () => {
